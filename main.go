@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/azylman/docker-reload/recursivenotify"
 )
@@ -74,6 +75,12 @@ func (b *Backend) StartBackend() bool {
 	if err != nil {
 		log.Printf("failed to parse url: %s", err.Error())
 	}
+	if b.proc != nil {
+		if err := b.proc.Process.Signal(syscall.SIGTERM); err != nil {
+			log.Fatal(err)
+		}
+	}
+	b.proc = run
 	b.Handler = httputil.NewSingleHostReverseProxy(url)
 	return true
 }
