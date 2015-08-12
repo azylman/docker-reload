@@ -89,7 +89,7 @@ func (b *Backend) ReloadOnChanges() {
 
 	for {
 		select {
-		case ev := <-watcher.Events:
+		case <-watcher.Events:
 			if ok := b.StartBackend(); ok {
 				log.Println("successfully reloaded")
 			}
