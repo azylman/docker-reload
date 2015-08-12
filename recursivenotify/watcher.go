@@ -53,6 +53,7 @@ func NewWatcher() (*Watcher, error) {
 		for {
 			select {
 			case ev := <-w.Events:
+				// TODO: if this created a new folder, call w.Add on the folder
 				new.Events <- ev
 			case err := <-w.Errors:
 				new.Errors <- err
