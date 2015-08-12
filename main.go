@@ -69,6 +69,7 @@ func (b *Backend) StartBackend() bool {
 	url, err := url.Parse("http://localhost:" + port)
 	if err != nil {
 		log.Printf("failed to parse url: %s", err.Error())
+		return false
 	}
 	if b.proc != nil {
 		if err := b.proc.Process.Signal(syscall.SIGTERM); err != nil {
@@ -89,7 +90,6 @@ func (b *Backend) ReloadOnChanges() {
 	for {
 		select {
 		case ev := <-watcher.Events:
-			log.Printf("got fs event for %s", ev.Name)
 			if ok := b.StartBackend(); ok {
 				log.Println("successfully reloaded")
 			}
