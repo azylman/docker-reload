@@ -54,24 +54,19 @@ func (b *Backend) StartBackend() bool {
 	pieces := strings.Split(last, " ")
 	image := pieces[len(pieces)-1]
 
-	listener, err := net.Listen("tcp", ":0")
+	port, err := getNewPort()
 	if err != nil {
 		return false
 	}
 
-	addr := listener.Addr()
-	listener.Close()
-	pieces = strings.Split(addr.String(), ":")
-	new := pieces[len(pieces)-1]
-
-	run := exec.Command("docker", "run", "-p", fmt.Sprintf("%s:%s", new, b.container), image)
+	run := exec.Command("docker", "run", "-p", fmt.Sprintf("%s:%s", port, b.container), image)
 	run.Stdout = os.Stdout
 	run.Stderr = os.Stderr
 	if err := run.Start(); err != nil {
 		return false
 	}
 
-	url, err := url.Parse("http://localhost:" + new)
+	url, err := url.Parse("http://localhost:" + port)
 	if err != nil {
 		log.Printf("failed to parse url: %s", err.Error())
 	}
@@ -125,4 +120,16 @@ func main() {
 	go backend.ReloadOnChanges()
 	http.Handle("/", backend)
 	panicIfErr(http.ListenAndServe(":"+pieces[0], nil))
+}
+
+func getNewPort() (string, error) {
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return "", err
+	}
+
+	addr := listener.Addr()
+	listener.Close()
+	pieces := strings.Split(addr.String(), ":")
+	return pieces[len(pieces)-1], nil
 }
