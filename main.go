@@ -40,12 +40,9 @@ func (b *Backend) StartBackend() bool {
 
 	build := exec.Command("docker", "build", ".")
 	var stdout bytes.Buffer
-	var stderr bytes.Buffer
 	build.Stdout = io.MultiWriter(os.Stdout, &stdout)
-	build.Stderr = io.MultiWriter(os.Stderr, &stderr)
+	build.Stderr = os.Stderr
 	if err := build.Run(); err != nil {
-		// Don't treat this as an error, just leave the old backend running
-		log.Printf("error building docker image:\n%s\n%s", stdout.String(), stderr.String())
 		return false
 	}
 
