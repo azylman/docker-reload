@@ -12,11 +12,13 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
 
 	"github.com/azylman/docker-reload/recursivenotify"
+	"gopkg.in/fsnotify.v1"
 )
 
 func panicIfErr(err error) {
@@ -86,8 +88,27 @@ func (b *Backend) ReloadOnChanges() {
 
 	for {
 		select {
-		case <-watcher.Events:
+		case ev := <-watcher.Events:
+			event := ""
+			switch ev.Op {
+			case fsnotify.Create:
+				event = "create"
+			case fsnotify.Write:
+				event = "write"
+			case fsnotify.Remove:
+				event = "remove"
+			case fsnotify.Rename:
+				event = "rename"
+			case fsnotify.Chmod:
+				event = "chmod"
+			}
+			if filepath.Base(ev.Name)[0] == '.' || strings.Contains(ev.Name, ".git") {
+				continue
+			}
+			fmt.Println("")
+			log.Printf("got %s event for %s", event, ev.Name)
 			if ok := b.StartBackend(); ok {
+				fmt.Println("")
 				log.Println("successfully reloaded")
 			}
 		case err := <-watcher.Errors:

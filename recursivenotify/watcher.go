@@ -23,8 +23,9 @@ func (w *Watcher) Add(name string) error {
 	if err != nil {
 		return err
 	}
+	w.Watcher.Add(name)
 	if !isDirectory {
-		return w.Watcher.Add(name)
+		return nil
 	} else {
 		files, err := ioutil.ReadDir(name)
 		if err != nil {
