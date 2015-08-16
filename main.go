@@ -29,6 +29,7 @@ func panicIfErr(err error) {
 
 type Backend struct {
 	container string
+	envFile   string
 
 	m    sync.Mutex
 	proc *exec.Cmd
@@ -58,7 +59,16 @@ func (b *Backend) StartBackend() bool {
 		return false
 	}
 
-	run := exec.Command("docker", "run", "-p", fmt.Sprintf("%s:%s", port, b.container), image)
+	args := []string{
+		"run",
+		"-p",
+		fmt.Sprintf("%s:%s", port, b.container),
+	}
+	if b.envFile != "" {
+		args = append(args, "--env-file", b.envFile)
+	}
+	args = append(args, image)
+	run := exec.Command("docker", args...)
 	run.Stdout = os.Stdout
 	run.Stderr = os.Stderr
 	if err := run.Start(); err != nil {
@@ -126,12 +136,14 @@ func (b *Backend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 func main() {
 	ports := flag.String("p", "", "optional port bindings")
+	envFile := flag.String("env-file", "", "optional env file")
 	flag.Parse()
 
 	pieces := strings.Split(*ports, ":")
 
 	backend := &Backend{
 		container: pieces[1],
+		envFile:   *envFile,
 	}
 	backend.StartBackend()
 
